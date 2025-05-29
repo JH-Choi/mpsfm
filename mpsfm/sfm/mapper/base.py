@@ -128,6 +128,7 @@ class MpsfmMapper(BaseClass):
         self.sfm_outputs_dir = sfm_outputs_dir
         if models is None:
             models = {}
+        import pdb; pdb.set_trace()
         if not setup_only:
             self.extractor = Extraction(
                 self.conf.extractors,

@@ -1,5 +1,5 @@
-torch 
-torchvision
+# torch 
+# torchvision
 omegaconf
 h5py
 tqdm
@@ -36,5 +36,5 @@ einops
 geffnet
 
 # Dpro
--e ./third_party/ml-depth-pro
+# -e ./third_party/ml-depth-pro
 

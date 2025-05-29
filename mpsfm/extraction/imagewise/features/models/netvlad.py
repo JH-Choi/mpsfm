@@ -53,7 +53,6 @@ class NetVLAD(BaseModel):
     def _init(self, conf):
         if conf["model_name"] not in self.checkpoint_urls:
             raise ValueError(f'{conf["model_name"]} not in {self.checkpoint_urls.keys()}.')
-
         # Download the checkpoint.
         checkpoint_path = Path(torch.hub.get_dir(), "netvlad", conf["model_name"] + ".mat")
         if not checkpoint_path.exists():

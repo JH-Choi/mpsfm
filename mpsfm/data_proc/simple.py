@@ -24,13 +24,17 @@ class SimpleParser(BaseDatasetParser):
         self.reconstruction_dir = None
         if rgb_dir is None:
             rgb_dir = Path(data_dir) / "images"
+        else:
+            rgb_dir = Path(rgb_dir)
         if imnames is None:
             imnames = [im.name for im in rgb_dir.iterdir()]
         self.imnames = imnames
         if intrinsics_pth is None:
             intrinsics_pth = Path(data_dir) / "intrinsics.yaml"
-            with open(intrinsics_pth, encoding="utf-8") as f:
-                intrinsics = yaml.safe_load(f)
+        else:
+            intrinsics_pth = Path(intrinsics_pth)
+        with open(intrinsics_pth, encoding="utf-8") as f:
+            intrinsics = yaml.safe_load(f)
         if len(intrinsics) == 1:
             assert intrinsics[1]["images"] == "all" or (
                 isinstance(intrinsics[1]["images"], list) and len(intrinsics[1]["images"]) == len(self.imnames)
