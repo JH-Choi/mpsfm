@@ -3,10 +3,8 @@ import sys
 from pathlib import Path
 
 import numpy as np
-import PIL.Image
 import torch
 import torchvision.transforms as tvf
-from PIL.ImageOps import exif_transpose
 
 from mpsfm.extraction import device
 from mpsfm.extraction.base_model import BaseModel
@@ -29,7 +27,6 @@ sys.path.append(str(dust3r_root_dir))  # noqa: E402
 curope_root_dir = gvars.ROOT / "third_party/mast3r/dust3r/croco/models/curope"
 sys.path.append(str(curope_root_dir))  # noqa: E402
 
-from dust3r.utils.image import ImgNorm, _resize_pil_image  # noqa: E402
 from mast3r.fast_nn import fast_reciprocal_NNs  # noqa: E402
 from mast3r.model import AsymmetricMASt3R, load_model  # noqa: E402
 
@@ -56,64 +53,6 @@ def symmetric_inference(model, img1, img2):
     res22, res12 = decoder(feat2, feat1, pos2, pos1, shape2, shape1)
 
     return (res11, res21, res22, res12)
-
-
-def load_images(folder_or_list, size, square_ok=False, verbose=True):
-    """open and convert all images in a list or folder to proper input format for DUSt3R"""
-    if isinstance(folder_or_list, str):
-        if verbose:
-            print(f">> Loading images from {folder_or_list}")
-        root, folder_content = folder_or_list, sorted(os.listdir(folder_or_list))
-
-    elif isinstance(folder_or_list, list):
-        if verbose:
-            print(f">> Loading a list of {len(folder_or_list)} images")
-        root, folder_content = "", folder_or_list
-
-    else:
-        raise ValueError(f"bad {folder_or_list=} ({type(folder_or_list)})")
-
-    supported_images_extensions = [".jpg", ".jpeg", ".png"]
-    if heif_support_enabled:
-        supported_images_extensions += [".heic", ".heif"]
-    supported_images_extensions = tuple(supported_images_extensions)
-
-    imgs = []
-    vars = []
-    for path in folder_content:
-        if not path.lower().endswith(supported_images_extensions):
-            continue
-        img = exif_transpose(PIL.Image.open(os.path.join(root, path))).convert("RGB")
-        W1, H1 = img.size
-        if size == 224:
-            # resize short side to 224 (then crop)
-            img = _resize_pil_image(img, round(size * max(W1 / H1, H1 / W1)))
-        else:
-            # resize long side to 512
-            img = _resize_pil_image(img, size)
-        W, H = img.size
-        cx, cy = W // 2, H // 2
-        if size == 224:
-            half = min(cx, cy)
-            img = img.crop((cx - half, cy - half, cx + half, cy + half))
-        else:
-            halfw, halfh = ((2 * cx) // 16) * 8, ((2 * cy) // 16) * 8
-            if not (square_ok) and W == H:
-                halfh = 3 * halfw / 4
-            img = img.crop((cx - halfw, cy - halfh, cx + halfw, cy + halfh))
-
-        W2, H2 = img.size
-        if verbose:
-            print(f" - adding {path} with resolution {W1}x{H1} --> {W2}x{H2}")
-        imgs.append(
-            dict(img=ImgNorm(img)[None], true_shape=np.int32([img.size[::-1]]), idx=len(imgs), instance=str(len(imgs)))
-        )
-        vars.append((cx, cy, halfw, halfh, H1, W1, H2, W2, H, W))
-
-    assert imgs, "no images foud at " + root
-    if verbose:
-        print(f" (Found {len(imgs)} images)")
-    return imgs, vars
 
 
 def merge_corres(idx1, idx2, shape1=None, shape2=None, ret_xy=True, ret_index=False):

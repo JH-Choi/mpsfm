@@ -68,6 +68,8 @@ def geometric_verification(
                 results.append(result)
     inlier_masks = {}
     for tvg, matches_, name0, name1 in results:
+        if tvg.config < 2:
+            continue
         tvg_cache[name0, name1] = tvg
         mask = np.isin(
             matches_.view([("", matches_.dtype)] * 2), tvg.inlier_matches.view([("", tvg.inlier_matches.dtype)] * 2)

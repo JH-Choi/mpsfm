@@ -34,9 +34,11 @@ class MpsfmMapper(BaseClass):
         "colmap_options": colmap_options
         | {
             "filter_min_tri_angle": 0.001,
+            "init_min_tri_angle": 0.001,
             "local_ba_min_tri_angle": 0.001,  # explore
             "min_angle": 0.001,
             "ignore_two_view_tracks": False,
+            "local_ba_num_images": 5,
         },
         # extraction
         "matches_mode": "sparse",  # sparse, dense, both combine with +
@@ -66,7 +68,6 @@ class MpsfmMapper(BaseClass):
         # dev
         "regular_resc": False,
         "filtall": False,
-        "old_init": False,
         "times_relax_init_thresh": 1,
     }
 
@@ -104,6 +105,7 @@ class MpsfmMapper(BaseClass):
         self.conf.reconstruction.matches_mode = self.conf.matches_mode
 
         self.conf.correspondences.verbose = self.conf.verbose
+        self.conf.depth_consistency_checker.verbose = self.conf.verbose
         self.conf.registration.verbose = self.conf.verbose
         self.conf.ba.verbose = self.conf.verbose
         self.conf.triangulator.verbose = self.conf.verbose
@@ -119,74 +121,71 @@ class MpsfmMapper(BaseClass):
         models=None,
         extract_only=False,
         scene_parser=None,
-        setup_only=False,
         **kwargs,
     ):
-        assert not (extract_only and setup_only), "Cannot have both extract_only and setup_only"
         self.cache_dir = cache_dir
         self.scene_parser = scene_parser
         self.sfm_outputs_dir = sfm_outputs_dir
         if models is None:
             models = {}
-        import pdb; pdb.set_trace()
-        if not setup_only:
-            self.extractor = Extraction(
-                self.conf.extractors,
-                scene_parser=scene_parser,
-                models=models,
-                cache_dir=self.cache_dir,
-                sfm_outputs_dir=self.sfm_outputs_dir,
-                references=references,
-                extract=self.conf.extract,
-            )
-            if self.conf.pairs_type == "retrieval":
-                self.extractor.extract_retrieval()
-            self.extractor.extract_pairs(self.conf.pairs_type)
-            self.extractor.extract_pairwise()
+        self.extractor = Extraction(
+            self.conf.extractors,
+            scene_parser=scene_parser,
+            models=models,
+            cache_dir=self.cache_dir,
+            sfm_outputs_dir=self.sfm_outputs_dir,
+            references=references,
+            extract=self.conf.extract,
+        )
 
-            if "depth" in self.conf.matches_mode:
-                self.extractor.extract_normals()
-            else:
-                self.extractor.extract_mono()
+        if self.conf.pairs_type == "retrieval":
+            self.extractor.extract_retrieval()
+        self.extractor.extract_pairs(self.conf.pairs_type)
+        self.extractor.extract_pairwise()
 
-            if len(self.conf.masks) > 0:
-                self.extractor.extract_masks(self.conf.masks)
+        if "depth" in self.conf.matches_mode:
+            self.extractor.extract_normals()
+        else:
+            self.extractor.extract_mono()
 
-            if extract_only:
-                return
+        if len(self.conf.masks) > 0:
+            self.extractor.extract_masks(self.conf.masks)
+
+        if extract_only:
+            return
+
         self.mpsfm_rec = MpsfmReconstruction.initialize_from_reconstruction(
             self.conf.reconstruction, references=references, scene_parser=scene_parser
         )
 
-        if not setup_only:
-            self.correspondences = Correspondences(
-                self.conf.correspondences,
-                mpsfm_rec=self.mpsfm_rec,
-                extractor=self.extractor,
-                sfm_outputs_dir=self.sfm_outputs_dir,
-            )
-            self.correspondences.populate()
-            self.optimizer = Optimizer(
-                self.conf.ba,
-                self.mpsfm_rec,
-                self.correspondences,
-            )
+        self.correspondences = Correspondences(
+            self.conf.correspondences,
+            mpsfm_rec=self.mpsfm_rec,
+            extractor=self.extractor,
+            sfm_outputs_dir=self.sfm_outputs_dir,
+        )
+        self.correspondences.populate()
+        self.optimizer = Optimizer(
+            self.conf.ba,
+            self.mpsfm_rec,
+            self.correspondences,
+        )
 
-            self.mpsfm_rec.correspondences = self.correspondences
+        self.mpsfm_rec.correspondences = self.correspondences
 
-            self.mpsfm_rec.obs = pycolmap.ObservationManager(self.mpsfm_rec.rec, self.correspondences.cg)
+        self.mpsfm_rec.obs = pycolmap.ObservationManager(self.mpsfm_rec.rec, self.correspondences.cg)
 
-            self.nextview = ImageSelection(self.conf.next_view, self.mpsfm_rec, self.correspondences)
+        self.nextview = ImageSelection(self.conf.next_view, self.mpsfm_rec, self.correspondences)
 
-            self.triangulator = MpsfmTriangulator(self.conf.triangulator, self.mpsfm_rec, self.correspondences.cg)
+        self.triangulator = MpsfmTriangulator(self.conf.triangulator, self.mpsfm_rec, self.correspondences.cg)
 
-            self.registration = MpsfmRegistration(
-                self.conf.registration,
-                self.mpsfm_rec,
-                self.correspondences,
-                self.triangulator,
-                optimizer=self.optimizer,
-            )
+        self.registration = MpsfmRegistration(
+            self.conf.registration,
+            self.mpsfm_rec,
+            self.correspondences,
+            self.triangulator,
+            optimizer=self.optimizer,
+        )
 
         self.depth_consistency_checker = DepthConsistencyChecker(
             self.conf.depth_consistency_checker,
@@ -194,13 +193,12 @@ class MpsfmMapper(BaseClass):
             self.correspondences,
         )
 
-        if not setup_only:
-            self.mpsfm_rec.initialize_mono_maps(
-                extraction_obj=self.extractor,
-                sfm_output_dir=self.sfm_outputs_dir,
-                pairs_pth=self.extractor.sfm_pairs_path,
-            )
-            self.mpsfm_rec.init_kps_info(extraction_obj=self.extractor)
+        self.mpsfm_rec.initialize_mono_maps(
+            extraction_obj=self.extractor,
+            sfm_output_dir=self.sfm_outputs_dir,
+            pairs_pth=self.extractor.sfm_pairs_path,
+        )
+        self.mpsfm_rec.init_kps_info(extraction_obj=self.extractor)
 
     def deregister_image(self, imid):
         """Deregister image from reconstruction"""
@@ -593,10 +591,10 @@ class MpsfmMapper(BaseClass):
         if self.conf.integrate and (not self.integrate_bundle([imid], int_covs=self.conf.int_covs)):
             print("Failed to integrate bundle")
             return None, False
-
         if self.conf.depth_consistency and check_depth_consistency:
-            bundle = self.find_local_bundle(imid, num_images=5, return_points=False)
-            if not self.depth_consistency_checker.check_image(imid, bundle):
+            dc_bundle = self.find_local_bundle(imid, num_images=5, return_points=False)
+
+            if not self.depth_consistency_checker.check_image(imid, dc_bundle):
                 return False
         self.log("Refining 3d points...", tstart=True, level=1)
         if not self.optimizer.refine_3d_points(
@@ -731,6 +729,8 @@ class MpsfmMapper(BaseClass):
             return {
                 "optim_ids": set([refimid]),
             }
+        if num_images is None:
+            num_images = self.conf.colmap_options.local_ba_num_images
         rec = self.mpsfm_rec
         optim_imids = set(rec.find_local_bundle_ids(refimid, num_images)) | {refimid}
         out = {"ref_id": refimid, "optim_ids": optim_imids}

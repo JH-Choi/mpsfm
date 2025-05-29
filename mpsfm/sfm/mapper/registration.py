@@ -338,9 +338,7 @@ class MpsfmRegistration(BaseClass):
             ]
         return candidate_points, cam_form_world2
 
-    def _collect_pairs(
-        self, im_ref_id, image_ref, image, pts2d_ids_ref, pts2d_ids_qry, use_3d, point3D_ids, pair2D3D, **kwrags
-    ):
+    def _collect_pairs(self, im_ref_id, image_ref, image, pts2d_ids_ref, pts2d_ids_qry, use_3d, point3D_ids, pair2D3D):
         used_matches = []
 
         pair2D3D["2d"] = np.array([image.points2D[pt].xy for pt in pts2d_ids_qry])

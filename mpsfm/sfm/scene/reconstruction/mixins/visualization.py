@@ -21,7 +21,7 @@ class VisualizationUtils:
         **kwargs,
     ):
         if m is None:
-            m = {"valid", "metric_scale", "continuity", "outlier"}
+            m = {"valid", "prior_scale", "continuity", "outlier"}
         if fig is None:
             fig = viz_3d.init_figure()
 
@@ -42,7 +42,7 @@ class VisualizationUtils:
             masks = {imid: np.ones(self.images[imid].depth.data.shape, dtype=bool) for imid in reg_imids}
             if "valid" in m:
                 masks = {imid: (masks[imid] * self.images[imid].depth.valid) for imid in reg_imids}
-            if "metric_scale" in m:
+            if "prior_scale" in m:
                 masks = {
                     imid: (masks[imid] * ((self.images[imid].depth.data / self.images[imid].depth.scale) < 100))
                     for imid in reg_imids
@@ -105,13 +105,6 @@ class VisualizationUtils:
         if fig is None:
             fig = viz_3d.init_figure()
         viz_3d.plot_cameras(fig, self.rec, name=name, size=size, color=color, **kwargs)
-        return fig
-
-    def visualization(self, cmaps=None, masks=None, prior=False, fig=None, **kwargs):
-        """Visualizes reconstruction with input RGB images."""
-
-        fig = self.vis_depth_maps(cmaps=cmaps, masks=masks, prior=prior, fig=fig, **kwargs)
-        fig = self.vis_colmap_reconstruction(fig, **kwargs)
         return fig
 
     def vis_colmap_points(self, fig=None, name=None, mode=None, ps=4, **kwargs):

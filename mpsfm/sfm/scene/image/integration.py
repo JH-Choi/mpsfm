@@ -28,7 +28,7 @@ class IntVars:
     energy_old = None
     integrated = False
 
-    def move_to_device(self, device, move_hessian=False):
+    def move_to_device(self, device):
         """Move variables between numpy and cupy."""
         if device == "cpu":
             if device_g == "cuda":
@@ -85,9 +85,6 @@ class Integration(IntVars):
     def __init__(self):
         IntVars.__init__(self)
         self.device = device_g
-
-        self.count_integrated = 0
-        self.count_skipped = 0
 
     def _prepare_integration_variables(self) -> tuple[dict, bool]:
         variables = {}
@@ -430,10 +427,8 @@ class Integration(IntVars):
         if self.integrated and not self.should_refine(energy):
             if self.conf.verbose > 2:
                 print("Energy hasn't changed. Skipping this frame.")
-            self.count_integrated += 1
             return False
 
-        self.count_skipped += 1
         energy_0 = min_energy = energy
         vis_energy = [cp.asnumpy(energy)]
 

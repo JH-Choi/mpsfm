@@ -5,7 +5,6 @@ class PointCovs:
     """Class for 3D point covariances."""
 
     data = {}
-    data_ap = None
 
     def points_zvars(self, image, p3d_ids=None):
         """Get the z-variance of 3D points in the image."""

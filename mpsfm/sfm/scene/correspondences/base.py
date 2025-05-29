@@ -10,7 +10,12 @@ from mpsfm.utils.io import get_matches
 from mpsfm.utils.parsers import read_unique_pairs
 from mpsfm.utils.tools import load_cfg
 
-from .utils import gather_dense_2view, gather_sparse_keypoints, gather_sparse_matches, geometric_verification
+from .utils import (
+    gather_dense_2view,
+    gather_sparse_keypoints,
+    gather_sparse_matches,
+    geometric_verification,
+)
 
 
 class ColmapCorrespondenceGraphWrapper:
@@ -53,15 +58,6 @@ class Correspondences(BaseClass, ColmapCorrespondenceGraphWrapper):
     def matches(self, imid1, imid2):
         """matches between image pair"""
         return self.find_correspondences_between_images(imid1, imid2)
-
-    def image_pairs(self):
-        pairs = []
-        for imid1 in self.mpsfm_rec.images:
-            for imid2 in self.mpsfm_rec.images:
-                if imid1 >= imid2 or self.num_correspondences_between_images(imid1, imid2) == 0:
-                    continue
-                pairs.append((imid1, imid2))
-        return pairs
 
     # --- Data Import and Preparation ---
     def gather_correspondences(self, pairs, ims):
@@ -122,15 +118,13 @@ class Correspondences(BaseClass, ColmapCorrespondenceGraphWrapper):
             kps = self.keypoints_set[imname]
             self.mpsfm_rec.images[im_id].points2D = [pycolmap.Point2D(xy=kp0_i) for kp0_i in kps.astype(np.float16)]
             self.cg.add_image(im_id, kps.shape[0])
-        for (name0, name1), match in self.matches_set.items():
-            if match is None:
-                continue
+
+        for (name0, name1), tvg in self._two_view_geom.items():
             self.cg.add_correspondences(
                 self.mpsfm_rec.imid(name0),
                 self.mpsfm_rec.imid(name1),
-                self.two_view_geom(name0, name1)[0].inlier_matches.astype(np.uint32),
+                tvg.inlier_matches.astype(np.uint32),
             )
-
         for imid in self.mpsfm_rec.images:
             if self.cg.num_correspondences_for_image(imid) == 0:
                 print(f"Image {imid} has no correspondences")

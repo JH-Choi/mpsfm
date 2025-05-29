@@ -21,7 +21,6 @@ class ReconstructionManager(BaseClass):
         scene_parser,
         scene="<custom>",
         extract_only=False,
-        setup_only=False,
         **kwargs,
     ):
 
@@ -34,6 +33,7 @@ class ReconstructionManager(BaseClass):
             print("\tSTARTING RECONSTRUCTION")
             self.log(f"for {scene} and images {references} with imids {kwargs['ref_imids']}", level=1)
         print(50 * "=")
+        MpsfmMapper.freeze_conf = False
         self.incremental_mapper = MpsfmMapper(
             conf=self.conf,
             references=references,
@@ -43,7 +43,6 @@ class ReconstructionManager(BaseClass):
             scene_parser=scene_parser,
             models=self.models,
             extract_only=extract_only,
-            setup_only=setup_only,
             **kwargs,
         )
         # check if has atribute extractor
@@ -54,9 +53,6 @@ class ReconstructionManager(BaseClass):
 
         if extract_only:
             print("Extraction complete")
-            return None
-        if setup_only:
-            print("Reconstruction manager setup ready")
             return None
         mpsfm_rec, _ = self.incremental_mapper(
             refrec=scene_parser.rec, exclude_init_pairs=exclude_init_pairs, references=references

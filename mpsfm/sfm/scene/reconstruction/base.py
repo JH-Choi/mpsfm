@@ -41,7 +41,6 @@ class MpsfmReconstruction(BaseClass, ColmapReconstructionWrapper, Reconstruction
         self._cameras = {}
 
         self.point_covs = PointCovs()
-        self.is_primary_2d = None
         self.refrec_dir = None
         self.references = None
         self.images_dir = None

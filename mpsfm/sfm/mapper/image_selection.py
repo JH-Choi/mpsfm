@@ -23,6 +23,7 @@ class ImageSelection(BaseClass):
             "MAX_VISIBLE_POINTS_NUM": self.rank_next_image_max_visible_points_num,
             "MAX_VISIBLE_POINTS_RATIO": self.rank_next_image_max_visible_points_ratio,
             "MIN_UNCERTAINTY": self.rank_next_image_min_uncertainty,
+            "MAX_SUM_CORR_QRY_AND_MAP": self.rank_next_image_sum_num_correspondences,
             "MAX_NUM_CORRESPONDENCES": self.rank_next_image_max_num_correspondences,
             "MAX_NUM_INLIER_CORRESPONDENCES": self.rank_next_image_max_num_inlier_correspondences,
             "MAX_NUM_INLIER_CORRESPONDENCES_TOT": self.rank_next_image_max_num_inlier_correspondences_tot,

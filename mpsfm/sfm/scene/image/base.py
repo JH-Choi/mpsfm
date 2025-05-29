@@ -70,7 +70,6 @@ class Image(ColmapImageWrapper, BaseClass, Integration):
         Integration.__init__(self)
 
         self.ignore_matches_AP = {}
-        self.dc_check_times_failed = 0
         self.dc_times_inliers_resampled = 0
         self.last_dc_score = None
         self.failed_dc_check = False

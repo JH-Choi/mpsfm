@@ -29,8 +29,6 @@ class Depth(BaseClass, PriorUtils):
         "verbose": 0,
     }
 
-    uncertainty_update_ap = None
-
     def _init(self, depth_dict, camera, kps, mask=None, **kwargs):
         self.kps = kps
         self.camera = camera

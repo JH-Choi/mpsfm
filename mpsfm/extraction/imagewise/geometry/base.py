@@ -59,7 +59,8 @@ def main(conf, export_dir, overwrite=False, image_list=None, model=None, scene_p
     image_list = [f for f in image_list if f not in skip_names]
     if verbose > 0:
         print(f"Skipping {extract_num-len(image_list)} files")
-    loader = get_dataset(conf.dataset.name)(
+
+    loader = scene_parser.dataset(
         conf.dataset, image_list=image_list, scene_parser=scene_parser, cache_dir=export_dir
     ).get_dataloader()
     if verbose > 0:

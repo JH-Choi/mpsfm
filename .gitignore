@@ -1,6 +1,7 @@
 local/example/cache_dir/*
 local/weights/*
 local/example/sfm_outputs/*
+local/benchmarks/*
 *.html
 
 

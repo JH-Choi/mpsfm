@@ -7,7 +7,6 @@ class PriorUtils:
     data = None
     data_prior = None
     uncertainty = None
-    image_size = None
 
     camera: any
     valid: np.ndarray

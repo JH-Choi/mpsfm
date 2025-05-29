@@ -88,12 +88,6 @@ class Extraction(BaseClass):
             extract = set()
         self.extract = extract
 
-    def extract_and_match_sparse(self, overwrite=False):
-        """Extract and match sparse features."""
-        features_conf = self.extract_sparse(overwrite=overwrite)
-        matcher_conf = self.match_sparse(overwrite=overwrite)
-        return features_conf, matcher_conf
-
     def extract_sparse(self, overwrite=False):
         """Extract sparse features."""
         if any(s in self.extract for s in ["f", "features"]):

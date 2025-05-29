@@ -56,11 +56,10 @@ class Metric3Dv2(BaseModel):
     def _forward(self, data):
         image = data["image"]
         intrinsics = data["intrinsics"]
-        intrinsics = intrinsics
 
         ori_shape = [image.shape[0], image.shape[1]]
 
-        rgb_input, cam_models_stacks, pad_info, label_scale_factor = transform_test_data_scalecano(
+        rgb_input, _, pad_info, label_scale_factor = transform_test_data_scalecano(
             image, intrinsics, self.metric3d_cfg.data_basic
         )
         rgb_input = rgb_input[None]

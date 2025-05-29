@@ -1,9 +1,9 @@
 """Base dataset class for loading and processing datasets for MP-SfM pipeline."""
 
-from abc import ABC, abstractmethod
 from pathlib import Path
 
 import numpy as np
+import pycolmap
 import torch
 from omegaconf import OmegaConf
 from PIL import Image
@@ -12,25 +12,19 @@ from torch.utils.data import DataLoader
 from mpsfm.data_proc.hloc.imagedataset import resize_image
 
 
-class BaseDatasetParser(ABC):
+class BaseDatasetParser:
     """Base class for dataset parsers. This class is used to parse the dataset and create a reconstruction object."""
 
-    base_default_conf = {}
-    default_conf = {}
+    dataset = None
     reconstruction_dir = None
     rec = None
     rgb_dir = None
 
-    def __init__(self, *args, **kwargs):
-        default_conf = OmegaConf.merge(
-            OmegaConf.create(self.base_default_conf),
-            OmegaConf.create(self.default_conf),
-        )
-        if "conf" not in kwargs:
-            kwargs["conf"] = {}
-        conf = OmegaConf.create(kwargs["conf"]) if isinstance(kwargs["conf"], dict) else kwargs["conf"]
-        self.conf = OmegaConf.merge(default_conf, conf)
-        self._init(*args, **kwargs)
+    def __init__(self, scene=None, *args, **kwargs):
+        self.scene = scene
+        self.rgb_dir = self.dataset.data_dir / self.scene / "images"
+        self.reconstruction_dir = self.dataset.data_dir / self.scene / "rec"
+        self.rec = pycolmap.Reconstruction(self.reconstruction_dir)
 
     def camera(self, imid):
         """Get camera object for the image id."""
@@ -50,10 +44,6 @@ class BaseDatasetParser(ABC):
         im = Image.open(self.rgb_dir / imname)
         im = np.array(im)
         return im
-
-    @abstractmethod
-    def _init(self, *args, **kwargs):
-        """To be implemented by the child class."""
 
 
 class BaseDataset:
@@ -142,3 +132,7 @@ class BaseDataset:
     def get_dataloader(self):
         """Get dataloader for the dataset."""
         return DataLoader(self, batch_size=self.conf.batch_size, shuffle=False, num_workers=self.conf.num_workers)
+
+    def _auto_download(self):
+        """Optional to be implemented by the child class."""
+        ...
