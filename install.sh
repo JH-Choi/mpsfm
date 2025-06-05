@@ -66,3 +66,8 @@ xhost +local:docker
 # In mpsfm folder, 
 pip install --upgrade pip setuptools wheel scikit-build-core
 python -m pip install -e .
+
+########################################################################
+### Install 7zip for downloading ETH
+########################################################################
+# apt-get install p7zip-full
